@@ -1,110 +1,71 @@
-#include <Wire.h>
 #include <Arduino.h>
-#include <ESP32Encoder.h>
-#include "imu.h"
+#include "IMU.h"
+#include "MOTOR.h"
+
+#define DEBUG 1
+
+#define BAULD_RATE 115200
+#define LOOP_DELAY 10000
 
 
-// Conversion constants
-#define ACCEL_SENSITIVITY 16384.0 // ±2g range, 16384 LSB/g
-#define GYRO_SENSITIVITY 131.0    // ±250°/s range, 131 LSB/(°/s)
-#define TEMP_SENSITIVITY 340.0    // 340 LSB/°C
-#define TEMP_OFFSET 36.53         // Offset for temperature conversion
+IMU imu;
 
-// Raw sensor values
-int16_t ax, ay, az, temp, gx, gy, gz;
+// ==== Motor 1 Pins ====
+gpio_num_t motor1_pwm   = GPIO_NUM_27;
+gpio_num_t motor1_dir   = GPIO_NUM_16;
+gpio_num_t motor1_brake = GPIO_NUM_14;
+gpio_num_t motor1_encA  = GPIO_NUM_25;
+gpio_num_t motor1_encB  = GPIO_NUM_17;
 
-// Converted values
-float ax_g, ay_g, az_g;       // Acceleration in g
-float temp_C;                 // Temperature in Celsius
-float gx_dps, gy_dps, gz_dps; // Gyroscope in °/s
+// ==== Motor 2 Pins ====
+gpio_num_t motor2_pwm   = GPIO_NUM_19;
+gpio_num_t motor2_dir   = GPIO_NUM_23;
+gpio_num_t motor2_brake = GPIO_NUM_18;
+gpio_num_t motor2_encA  = GPIO_NUM_13;
+gpio_num_t motor2_encB  = GPIO_NUM_5;
 
-ESP32Encoder encoder;
+// ==== Motor 3 Pins ====
+gpio_num_t motor3_pwm   = GPIO_NUM_33;
+gpio_num_t motor3_dir   = GPIO_NUM_32;
+gpio_num_t motor3_brake = GPIO_NUM_15;
+gpio_num_t motor3_encA  = GPIO_NUM_2;
+gpio_num_t motor3_encB  = GPIO_NUM_4;
 
-void setup()
-{
-  
-  Serial.begin(115200);
-  
-  // Initialize I²C
-  Wire.begin();
+// ==== Motor PWM Channels ====
+uint8_t motor1_pwm_ch = 0;
+uint8_t motor2_pwm_ch = 1;
+uint8_t motor3_pwm_ch = 2;
 
-  // Wake up MPU6050 (write 0 to power management register)
-  writeData(MPU6050_ADDR, MPU6050_PWR_MGMT_1, 0b00000000);
+// ==== Motor Objects ====
+Motor motor_1(motor1_pwm, motor1_dir, motor1_brake, motor1_encA, motor1_encB, motor1_pwm_ch);
+Motor motor_2(motor2_pwm, motor2_dir, motor2_brake, motor2_encA, motor2_encB, motor2_pwm_ch);
+Motor motor_3(motor3_pwm, motor3_dir, motor3_brake, motor3_encA, motor3_encB, motor3_pwm_ch);
 
-  // Set gyroscope range to +/- 500°/s
-  writeData(MPU6050_ADDR, MPU6050_GYRO_CONFIG, 0b00001000);
+void setup() {
+    Serial.begin(BAULD_RATE);
 
-  // Set accelerometer range to +/- 2g
-  writeData(MPU6050_ADDR, MPU6050_ACCEL_CONFIG, 0b00000000);
+    imu.setup();
 
-  ESP32Encoder::useInternalWeakPullResistors = puType::up;
-
-  // Attach the encoder pins
-  encoder.attachFullQuad(2, 4);
-
-  // Reset the encoder count to 0
-  encoder.clearCount();
+    motor_1.begin();
+    motor_2.begin();
+    motor_3.begin();
 }
 
-void loop()
-{
-  // Read sensor data from MPU6050
-  Wire.beginTransmission(MPU6050_ADDR);
-  Wire.write(0x3B); // Start reading from ACCEL_XOUT_H
-  Wire.endTransmission(false);
-  Wire.requestFrom(MPU6050_ADDR, 14); // Reads 14 Bytes starting from MPU_ACCEL_VALUES register
+void loop() {
 
-  // Read accelerometer data
-  ax = Wire.read() << 8 | Wire.read();
-  ay = Wire.read() << 8 | Wire.read();
-  az = Wire.read() << 8 | Wire.read();
+    IMU::SensorData data = imu.readSensorData(DEBUG);
 
-  // Read temperature data
-  temp = Wire.read() << 8 | Wire.read();
+    long m1_pos = motor_1.getPosition(DEBUG);
+    long m2_pos = motor_2.getPosition(DEBUG);
+    long m3_pos = motor_3.getPosition(DEBUG);
 
-  // Read gyroscope data
-  gx = Wire.read() << 8 | Wire.read();
-  gy = Wire.read() << 8 | Wire.read();
-  gz = Wire.read() << 8 | Wire.read();
-
-  // Convert raw values
-  ax_g = ax / ACCEL_SENSITIVITY; // Convert to g
-  ay_g = ay / ACCEL_SENSITIVITY;
-  az_g = az / ACCEL_SENSITIVITY;
-
-  temp_C = (temp / TEMP_SENSITIVITY) + TEMP_OFFSET; // Convert to Celsius
-
-  gx_dps = gx / GYRO_SENSITIVITY; // Convert to degrees per second
-  gy_dps = gy / GYRO_SENSITIVITY;
-  gz_dps = gz / GYRO_SENSITIVITY;
-
-  //Get encoder values
-  long position = encoder.getCount();
-
-  // Print values
-
-  //imu
-  Serial.println("--------------------");
-  Serial.print("Accel (g): X=");
-  Serial.print(ax_g, 2);
-  Serial.print(" Y=");
-  Serial.print(ay_g, 2);
-  Serial.print(" Z=");
-  Serial.println(az_g, 2);
-
-  Serial.print("Temp (°C): ");
-  Serial.println(temp_C, 2);
-
-  Serial.print("Gyro (°/s): X=");
-  Serial.print(gx_dps, 2);
-  Serial.print(" Y=");
-  Serial.print(gy_dps, 2);
-  Serial.print(" Z=");
-  Serial.println(gz_dps, 2);
-
-  //Encoder
-  Serial.print("Encoder Position: ");
-  Serial.println(position);
-
-  delay(500); // Read every 500ms
+    Serial.println("Speed 10%");
+    motor_2.setSpeed(10);  // 10%
+    delay(LOOP_DELAY);
+    Serial.println("Speed 0%");
+    motor_2.setSpeed(0);   // Idle but brake OFF
+    delay(LOOP_DELAY);
+    Serial.println("Break");
+    motor_2.stop();        // Fully stop with brake ON
+    delay(LOOP_DELAY);
 }
