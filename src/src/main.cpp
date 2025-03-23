@@ -60,12 +60,23 @@ void loop() {
     long m3_pos = motor_3.getPosition(DEBUG);
 
     Serial.println("Speed 10%");
+    motor_1.setSpeed(10);  // 10%
     motor_2.setSpeed(10);  // 10%
+    motor_3.setSpeed(10);  // 10%
+    delay(LOOP_DELAY);
+    Serial.println("Speed 50%");
+    motor_1.setSpeed(50);  // 50%
+    motor_2.setSpeed(50);  // 50%
+    motor_3.setSpeed(50);  // 50%
+    delay(LOOP_DELAY);
+    Serial.println("Speed 100%");
+    motor_1.setSpeed(100);  // 100%
+    motor_2.setSpeed(100);  // 100%
+    motor_3.setSpeed(100);  // 100%
     delay(LOOP_DELAY);
     Serial.println("Speed 0%");
-    motor_2.setSpeed(0);   // Idle but brake OFF
-    delay(LOOP_DELAY);
-    Serial.println("Break");
-    motor_2.stop();        // Fully stop with brake ON
+    motor_1.setSpeed(0);  // 0%
+    motor_2.setSpeed(0);  // 0%
+    motor_3.setSpeed(0);  // 0%
     delay(LOOP_DELAY);
 }
