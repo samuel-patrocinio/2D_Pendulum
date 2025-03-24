@@ -4,17 +4,20 @@
 #include <Arduino.h>
 #include <ESP32Encoder.h>
 
-class Encoder {
+class Encoder
+{
 public:
     Encoder(gpio_num_t pinA, gpio_num_t pinB);
 
     void begin();
-    long getPosition();
+    float getAngle();
     void reset();
 
 private:
     gpio_num_t pinA, pinB;
     ESP32Encoder encoder;
+
+    static constexpr int CPR = 400;
 };
 
 #endif
