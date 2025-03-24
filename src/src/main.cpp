@@ -79,7 +79,7 @@ void loop()
         const float K1 = -5;
 
         // Compute normalized control input u ∈ [-1, 1]
-        float u = - K1 * angle;
+        float u = -K1 * angle;
 
         // Apply control to motor
         motor_1.setSpeed(u);
