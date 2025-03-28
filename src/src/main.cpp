@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <cmath>
 #include "IMU.h"
 #include "MOTOR.h"
 
@@ -38,7 +39,7 @@ gpio_num_t motor2_encB = GPIO_NUM_5;
 gpio_num_t motor3_pwm = GPIO_NUM_33;
 gpio_num_t motor3_dir = GPIO_NUM_32;
 gpio_num_t motor3_brake = GPIO_NUM_15;
-gpio_num_t motor3_encA = GPIO_NUM_2;
+gpio_num_t motor3_encA = GPIO_NUM_36;
 gpio_num_t motor3_encB = GPIO_NUM_4;
 
 // ==== Motor PWM Channels ====
@@ -50,8 +51,6 @@ uint8_t motor3_pwm_ch = 2;
 Motor motor_1(motor1_pwm, motor1_dir, motor1_brake, motor1_encA, motor1_encB, motor1_pwm_ch);
 Motor motor_2(motor2_pwm, motor2_dir, motor2_brake, motor2_encA, motor2_encB, motor2_pwm_ch);
 Motor motor_3(motor3_pwm, motor3_dir, motor3_brake, motor3_encA, motor3_encB, motor3_pwm_ch);
-
-float last_angle = 0;
 
 void setup()
 {
@@ -72,24 +71,20 @@ void loop()
         previousT = currentT;
         IMU::SensorData data = imu.readData(DEBUG);
 
-        // Get angle and angular velocity
-        float angle = motor_1.getAngle(DEBUG) * PI / 180.0;
+        float u1 = 0 * data.x_deg + 1 * data.y_deg;
+        float u2 = sqrt(3.0) / 2.0 * data.x_deg - 1.0 / 2.0 * data.y_deg;
+        float u3 = -sqrt(3.0) / 2.0 * data.x_deg - 1.0 / 2.0 * data.y_deg;
 
-        // LQR gains
-        const float K1 = -5;
+        u1 *= 10;
+        u2 *= 10;
+        u3 *= 10;
 
-        // Compute normalized control input u ∈ [-1, 1]
-        float u = -K1 * angle;
+        Serial.println(u1);
+        Serial.println(u2);
+        Serial.println(u3);
 
-        // Apply control to motor
-        motor_1.setSpeed(u);
-
-        // Debug info
-        Serial.print("Angle: ");
-        Serial.println(angle);
-        Serial.print("Control (u): ");
-        Serial.println(u);
-
-        last_angle = angle;
+        motor_1.setSpeed(u1);
+        motor_2.setSpeed(u2);
+        motor_3.setSpeed(u3);
     }
 }
