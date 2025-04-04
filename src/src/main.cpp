@@ -8,7 +8,7 @@
 #define BAULD_RATE 115200
 
 // Loop config
-float Ts = 1, currentT = 0.0, previousT = 0.0;
+float Ts = 0.1, currentT = 0.0, previousT = 0.0;
 
 // IMU config
 float gx_offset = 0;
@@ -71,20 +71,5 @@ void loop()
         previousT = currentT;
         IMU::SensorData data = imu.readData(DEBUG);
 
-        float u1 = 0 * data.x_deg + 1 * data.y_deg;
-        float u2 = sqrt(3.0) / 2.0 * data.x_deg - 1.0 / 2.0 * data.y_deg;
-        float u3 = -sqrt(3.0) / 2.0 * data.x_deg - 1.0 / 2.0 * data.y_deg;
-
-        u1 *= 10;
-        u2 *= 10;
-        u3 *= 10;
-
-        Serial.println(u1);
-        Serial.println(u2);
-        Serial.println(u3);
-
-        motor_1.setSpeed(u1);
-        motor_2.setSpeed(u2);
-        motor_3.setSpeed(u3);
     }
 }
