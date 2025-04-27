@@ -70,6 +70,8 @@ void loop()
     {
         previousT = currentT;
         IMU::SensorData data = imu.readData(DEBUG);
-
+        motor_1.setSpeed(5);
+        motor_2.setSpeed(5);
+        motor_3.setSpeed(5);
     }
 }
