@@ -5,7 +5,7 @@ from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 
 # === CONFIGURE AQUI ===
-PORT = 'COM4'  # Substitua pela sua porta serial (ex: '/dev/ttyUSB0' no Linux)
+PORT = 'COM3'  # Substitua pela sua porta serial (ex: '/dev/ttyUSB0' no Linux)
 BAUD = 115200
 
 ser = serial.Serial(PORT, BAUD)

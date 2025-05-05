@@ -41,10 +41,10 @@ bool vertical = false;
 bool calibrating = false;
 bool calibrated = false;
 
-float K1 = 135;
-float K2 = 6.0;
-float K3 = 0.0;
-int loop_time = 10;
+float K1 = 40.0;
+float K2 = 5.0;
+float K3 = 0.1;
+int loop_time = 1;
 
 struct OffsetsObj {
   int ID;
@@ -118,8 +118,8 @@ void writeTo(byte device, byte address, byte value) {
     
     //Serial.print(angleX); Serial.print(" "); Serial.println(angleY); // plot
     //Serial.print("AngleX: "); Serial.print(angleX); Serial.print(" AngleY: "); Serial.println(angleY);
-    if (abs(angleX) > 30 || abs(angleY) > 30) vertical = false;
-    if (abs(angleX) < 20 && abs(angleY) < 20) vertical = true;
+    if (abs(angleX) > 15 || abs(angleY) > 15) vertical = false;
+    if (abs(angleX) < 0.4 && abs(angleY) < 0.4) vertical = true;
   }
   
   void angle_setup() {
@@ -186,11 +186,12 @@ void writeTo(byte device, byte address, byte value) {
   }
   
   void XY_to_threeWay(float pwm_X, float pwm_Y) {   
-    int16_t m1 = round(-0.5 * pwm_X - 0.75 * pwm_Y);
-    int16_t m2 = pwm_X; 
-    int16_t m3 = round(-0.5 * pwm_X + 0.75 * pwm_Y);
-    Serial.print("M1: "); Serial.print(m1);Serial.print(" M2: "); Serial.print(m2);Serial.print(" M3: "); Serial.print(m3);
-    Serial.print(" AngleX: "); Serial.print(angleX); Serial.print(" AngleY: "); Serial.println(angleY);
+    int16_t m1 = round(0 * pwm_X + 0.58 * pwm_Y);
+    int16_t m2 = round(0 * pwm_X - 0.58 * pwm_Y); 
+    int16_t m3 = round(1.0 * pwm_X + 0.0 * pwm_Y);
+    //Serial.print("M1: "); Serial.print(m1);Serial.print(" M2: "); Serial.print(m2);Serial.print(" M3: "); Serial.print(m3);
+    //Serial.print(" AngleX: "); Serial.print(angleX); Serial.print(" AngleY: "); Serial.print(angleY);
+    //printValues();
     Motor1_control(m1);
     Motor2_control(m2);
     Motor3_control(m3);
@@ -206,69 +207,83 @@ void writeTo(byte device, byte address, byte value) {
   }
 
   void printValues() {
-    Serial.print("K1: "); Serial.print(K1);
+    Serial.print(" K1: "); Serial.print(K1);
     Serial.print(" K2: "); Serial.print(K2);
-    Serial.print(" K3: "); Serial.println(K3,4);
+    Serial.print(" K3: "); Serial.println(K3);
   }
   
-  int Tuning() {
-    if (!SerialBT.available()) return 0;
-    //delay(2);
-    char param = SerialBT.read();               // get parameter byte
-    if (!SerialBT.available()) return 0;
-    char cmd = SerialBT.read();                 // get command byte
-    //SerialBT.flush();
-    switch (param) {
-      
-      case 'p':
-        if (cmd == '+')    K1 += 1;
-        if (cmd == '-')    K1 -= 1;
-        printValues();
-        break;
-        case 'i':
-        if (cmd == '+')    K2 += 0.05;
-        if (cmd == '-')    K2 -= 0.05;
-        printValues();
-        break;  
-      case 's':
-        if (cmd == '+')    K3 += 0.005;
-        if (cmd == '-')    K3 -= 0.005;
-        printValues();
-        break;  
-      case 'c':
-        if (cmd == '+' && !calibrating) {
-          calibrating = true;
-           Serial.println("calibrating on");
-        }
-        if (cmd == '-' && calibrating)  {
-          Serial.print("X: "); Serial.print(robot_angleX); Serial.print(" Y: "); Serial.println(robot_angleY);
-          if (abs(robot_angleX) < 15 && abs(robot_angleY) < 15) {
-            offsets.X = robot_angleX;
-            offsets.Y = robot_angleY;
-            offsets.ID = 34;
-            EEPROM.put(0, offsets);
-            EEPROM.commit();
-            calibrated = true;
-            calibrating = false;
-            Serial.println("calibrating off");
-            digitalWrite(BUZZER, HIGH);
-            delay(70);
-            digitalWrite(BUZZER, LOW);
-          } else {
-            Serial.println("The angles are wrong!!!");
-            digitalWrite(BUZZER, HIGH);
-            delay(50);
-            digitalWrite(BUZZER, LOW);
-            delay(70);
-            digitalWrite(BUZZER, HIGH);
-            delay(50);
-            digitalWrite(BUZZER, LOW);
-          }
-        }
-        break;        
-     }
-     return 1;
+ int Tuning() {
+  if (!Serial.available()) return 0;
+
+  char param = Serial.read(); // 'p', 'i', 's', or 'c'
+  
+  if (!Serial.available()) return 0;
+
+  char cmd = Serial.read(); // '=' for direct assignment, '+' or '-' for calibration/adjustments
+
+  if (param == 'c') {
+    if (cmd == '+' && !calibrating) {
+      calibrating = true;
+      Serial.println("calibrating on");
+    } else if (cmd == '-' && calibrating) {
+      Serial.print("X: "); Serial.print(robot_angleX); Serial.print(" Y: "); Serial.println(robot_angleY);
+      if (abs(robot_angleX) < 15 && abs(robot_angleY) < 15) {
+        offsets.X = robot_angleX;
+        offsets.Y = robot_angleY;
+        offsets.ID = 34;
+        EEPROM.put(0, offsets);
+        EEPROM.commit();
+        calibrated = true;
+        calibrating = false;
+        Serial.println("calibrating off");
+        digitalWrite(BUZZER, HIGH);
+        delay(70);
+        digitalWrite(BUZZER, LOW);
+      } else {
+        Serial.println("The angles are wrong!!!");
+        digitalWrite(BUZZER, HIGH); delay(50); digitalWrite(BUZZER, LOW);
+        delay(70);
+        digitalWrite(BUZZER, HIGH); delay(50); digitalWrite(BUZZER, LOW);
+      }
+    }
+    return 1;
   }
+
+  if (cmd == '=') {
+    // Read float value as string until newline
+    String valueStr = Serial.readStringUntil('\n');
+    float value = valueStr.toFloat();
+
+    switch (param) {
+      case 'p': K1 = value; break;
+      case 'i': K2 = value; break;
+      case 's': K3 = value; break;
+    }
+
+    printValues();
+    return 1;
+  }
+
+  // Legacy +/- control
+  switch (param) {
+    case 'p':
+      if (cmd == '+') K1 += 1;
+      if (cmd == '-') K1 -= 1;
+      break;
+    case 's':
+      if (cmd == '+') K2 += 0.05;
+      if (cmd == '-') K2 -= 0.05;
+      break;
+    case 'i':
+      if (cmd == '+') K3 += 0.005;
+      if (cmd == '-') K3 -= 0.005;
+      break;
+  }
+
+  printValues();
+  return 1;
+}
+
 
 void setup() {
   Serial.begin(115200);
@@ -314,24 +329,37 @@ void loop() {
     } else 
       Gyro_amount = 0.1;
     
-	if (vertical && calibrated && !calibrating) {
-      digitalWrite(BRAKE, HIGH);
-      gyroX = GyX / 131.0; // Convert to deg/s
-      gyroY = GyY / 131.0; // Convert to deg/s
-      
-      int pwm_X = constrain(K1 * angleX + K2 * gyroX + K3 * motor_speed_X, -255, 255);
-      int pwm_Y = constrain(K1 * angleY + K2 * gyroY + K3 * motor_speed_Y, -255, 255);
+  if (vertical && calibrated && !calibrating) {
+    digitalWrite(BRAKE, HIGH);
+    gyroX = GyX / 131.0; // Convert to deg/s
+    gyroY = GyY / 131.0; // Convert to deg/s
 
-      motor_speed_X += pwm_X; 
+    // Limita o valor do integrador antes de usar
+    motor_speed_X = constrain(motor_speed_X, -300, 300);
+    motor_speed_Y = constrain(motor_speed_Y, -300, 300);
+
+    // Calcula PWM bruto com o termo integral
+    float raw_pwm_X = K1 * angleX + K2 * gyroX + K3 * motor_speed_X;
+    float raw_pwm_Y = K1 * angleY + K2 * gyroY + K3 * motor_speed_Y;
+
+    // Aplica saturação aos sinais enviados aos motores
+    int pwm_X = constrain(raw_pwm_X, -255, 255);
+    int pwm_Y = constrain(raw_pwm_Y, -255, 255);
+
+    // Anti-windup: acumula apenas se não saturou
+    if (pwm_X == (int)raw_pwm_X) {
+      motor_speed_X += pwm_X;
+    }
+    if (pwm_Y == (int)raw_pwm_Y) {
       motor_speed_Y += pwm_Y;
-      XY_to_threeWay(pwm_X, pwm_Y);
-    } else {
+    }
+
+    XY_to_threeWay(pwm_X, pwm_Y);
+  } else {
       XY_to_threeWay(0, 0);
       digitalWrite(BRAKE, LOW);
       motor_speed_X = 0;
       motor_speed_Y = 0;
-    }
-    previousT_1 = currentT;
   }
   
   if (currentT - previousT_2 >= 2000) {    
@@ -340,5 +368,6 @@ void loop() {
       Serial.println("first you need to calibrate the balancing point...");
     }
     previousT_2 = currentT;
+  }
   }
 }
