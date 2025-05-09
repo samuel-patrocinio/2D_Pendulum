@@ -57,7 +57,6 @@ void setup() {
  
   delay(200);
   angle_setup();
- 
 }
  
 void loop() {
@@ -88,19 +87,14 @@ void loop() {
       gyroXfilt = alpha * gyroX + (1 - alpha) * gyroXfilt;
       gyroYfilt = alpha * gyroY + (1 - alpha) * gyroYfilt;
       
-      // int pwm_X = constrain(K1 * robot_angleX + K2 * gyroXfilt + K3 * speed_X + K4 * motors_speed_X, -255, 255);
-      // int pwm_Y = constrain(K1 * robot_angleY + K2 * gyroYfilt + K3 * speed_Y + K4 * motors_speed_Y, -255, 255);
-      // int pwm_Z = constrain(zK2 * gyroZ + zK3 * motors_speed_Z, -255, 255);
+      int pwm_X = constrain(K1 * robot_angleX + K2 * gyroXfilt + K3 * speed_X + K4 * motors_speed_X, -255, 255);
+      int pwm_Y = constrain(K1 * robot_angleY + K2 * gyroYfilt + K3 * speed_Y + K4 * motors_speed_Y, -255, 255);
+      int pwm_Z = constrain(zK2 * gyroZ + zK3 * motors_speed_Z, -255, 255);
+      pwm_Z = 0;
  
-      // motors_speed_X += speed_X / 5;
-      // motors_speed_Y += speed_Y / 5;
-      // XYZ_to_threeWay(pwm_X, pwm_Y, pwm_Z);
-
-      // Moto aresta:
-      int pwm_X = constrain(eK1 * robot_angleX + eK2 * gyroXfilt + eK3 * motor3_speed + eK4 * motors_speed_X, -255, 255);
-      
-      motors_speed_X += motor3_speed / 5;
-      Motor3_control(pwm_X);
+      motors_speed_X += speed_X / 5;
+      motors_speed_Y += speed_Y / 5;
+      XYZ_to_threeWay(pwm_X, pwm_Y, pwm_Z);
  
  
     } else if (vertical_edge && calibrated && !calibrating) {

@@ -105,9 +105,9 @@ void angle_calc() {
 void XYZ_to_threeWay(float pwm_X, float pwm_Y, float pwm_Z) {
   int16_t m1 = round((0.5 * pwm_X - 0.866 * pwm_Y) / 1.37 + pwm_Z);  
   int16_t m2 = round((0.5 * pwm_X + 0.866 * pwm_Y) / 1.37 + pwm_Z);
-  int16_t m3 = -pwm_X / 1.37 + pwm_Z;  
-  Motor1_control(m1);
-  Motor2_control(m2);
+  int16_t m3 = pwm_X + pwm_Z;  
+  Motor1_control(0);
+  Motor2_control(0);
   Motor3_control(m3);
 }
  
@@ -178,92 +178,94 @@ void ENC3_READ() {
 }
  
 int Tuning() {
-  if (!SerialBT.available()) return 0;
+  if (!Serial.available()) return 0;
  
-  String input = SerialBT.readStringUntil('\n');
+  String input = Serial.readStringUntil('\n');
   input.trim();
  
   // Comando de calibração (mantido do código original)
   if (input == "c+") {
     if (!calibrating) {
       calibrating = true;
-      SerialBT.println("🔧 Calibração iniciada. Coloque o cubo no vértice...");
+      Serial.println("🔧 Calibração iniciada. Coloque o cubo no vértice...");
     }
     return 1;
   }
  
   if (input == "c-") {
-    SerialBT.print("X: "); SerialBT.print(AcX); SerialBT.print(" Y: "); SerialBT.print(AcY); SerialBT.print(" Z: "); SerialBT.println(AcZ + 16384);
+    Serial.print("X: "); Serial.print(AcX); Serial.print(" Y: "); Serial.print(AcY); Serial.print(" Z: "); Serial.println(AcZ + 16384);
     if (abs(AcX) < 2000 && abs(AcY) < 2000) {
       offsets.ID = 96;
       offsets.acXv = AcX;
       offsets.acYv = AcY;
       offsets.acZv = AcZ + 16384;
-      SerialBT.println("✅ Vértice calibrado. Agora coloque na aresta.");
+      Serial.println("✅ Vértice calibrado. Agora coloque na aresta.");
+      save();
       vertex_calibrated = true;
  
-    } else if (abs(AcX) > 7000 && abs(AcX) < 10000 && abs(AcY) < 2000 && vertex_calibrated) {
-      offsets.acXe = AcX;
-      offsets.acYe = AcY;
-      offsets.acZe = AcZ + 16384;
-      SerialBT.println("✅ Aresta calibrada.");
-      save();
-    } else {
-      SerialBT.println("⚠️ Ângulos inválidos para calibração.");
+    } //else if (abs(AcX) > 7000 && abs(AcX) < 10000 && abs(AcY) < 2000 && vertex_calibrated) {
+      //offsets.acXe = AcX;
+      //offsets.acYe = AcY;
+      //offsets.acZe = AcZ + 16384;
+      //Serial.println("✅ Aresta calibrada.");
+      //save();
+    //} 
+    else {
+      Serial.println("⚠️ Ângulos inválidos para calibração.");
     }
     return 1;
   }
  
   // Comando de exibição dos valores atuais
   if (input == "print") {
-    SerialBT.printf("K1=%.2f K2=%.2f K3=%.2f K4=%.3f\n", K1, K2, K3, K4);
-    SerialBT.printf("zK2=%.2f zK3=%.2f\n", zK2, zK3);
-    SerialBT.printf("eK1=%.2f eK2=%.2f eK3=%.2f eK4=%.3f\n", eK1, eK2, eK3, eK4);
+    Serial.printf("K1=%.2f K2=%.2f K3=%.2f K4=%.3f\n", K1, K2, K3, K4);
+    Serial.printf("zK2=%.2f zK3=%.2f\n", zK2, zK3);
+    Serial.printf("eK1=%.2f eK2=%.2f eK3=%.2f eK4=%.3f\n", eK1, eK2, eK3, eK4);
     return 1;
   }
  
 if (input.startsWith("K1=")) {
     K1 = input.substring(3).toFloat();
-    SerialBT.print("K1 atualizado para: "); SerialBT.println(K1);
+    Serial.print("K1 atualizado para: "); Serial.println(K1);
     return 1;
   } else if (input.startsWith("K2=")) {
     K2 = input.substring(3).toFloat();
-    SerialBT.print("K2 atualizado para: "); SerialBT.println(K2);
+    Serial.print("K2 atualizado para: "); Serial.println(K2);
     return 1;
   } else if (input.startsWith("K3=")) {
     K3 = input.substring(3).toFloat();
-    SerialBT.print("K3 atualizado para: "); SerialBT.println(K3);
+    Serial.print("K3 atualizado para: "); Serial.println(K3);
     return 1;
   } else if (input.startsWith("K4=")) {
     K4 = input.substring(3).toFloat();
-    SerialBT.print("K4 atualizado para: "); SerialBT.println(K4);
+    Serial.print("K4 atualizado para: "); Serial.println(K4);
     return 1;
   } else if (input.startsWith("zK2=")) {
     zK2 = input.substring(4).toFloat();
-    SerialBT.print("zK2 atualizado para: "); SerialBT.println(zK2);
+    Serial.print("zK2 atualizado para: "); Serial.println(zK2);
     return 1;
   } else if (input.startsWith("zK3=")) {
     zK3 = input.substring(4).toFloat();
-    SerialBT.print("zK3 atualizado para: "); SerialBT.println(zK3);
+    Serial.print("zK3 atualizado para: "); Serial.println(zK3);
     return 1;
   } else if (input.startsWith("eK1=")) {
     eK1 = input.substring(4).toFloat();
-    SerialBT.print("eK1 atualizado para: "); SerialBT.println(eK1);
+    Serial.print("eK1 atualizado para: "); Serial.println(eK1);
     return 1;
   } else if (input.startsWith("eK2=")) {
     eK2 = input.substring(4).toFloat();
-    SerialBT.print("eK2 atualizado para: "); SerialBT.println(eK2);
+    Serial.print("eK2 atualizado para: "); Serial.println(eK2);
     return 1;
   } else if (input.startsWith("eK3=")) {
     eK3 = input.substring(4).toFloat();
-    SerialBT.print("eK3 atualizado para: "); SerialBT.println(eK3);
+    Serial.print("eK3 atualizado para: "); Serial.println(eK3);
     return 1;
   } else if (input.startsWith("eK4=")) {
     eK4 = input.substring(4).toFloat();
-    SerialBT.print("eK4 atualizado para: "); SerialBT.println(eK4);
+    Serial.print("eK4 atualizado para: "); Serial.println(eK4);
     return 1;
   } else {
-    SerialBT.println("Comando invalido! Use formato GANHO=VALOR. Exemplo: K1=180");
+    Serial.println("Comando invalido! Use formato GANHO=VALOR. Exemplo: K1=180");
     return 1;
   }
 }
