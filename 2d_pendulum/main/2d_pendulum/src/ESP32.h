@@ -49,8 +49,8 @@ bool calibrated_leds = false;
  
 float K1 = 190;
 float K2 = 31.00;
-float K3 = 2.5;
-float K4 = 0.014;
+float K3 = -2.5;
+float K4 = -0.014;
 
 float zK2 = 8.00;
 float zK3 = 0.30;
@@ -98,3 +98,6 @@ volatile int  enc_count1 = 0, enc_count2 = 0, enc_count3 = 0;
 int16_t motor1_speed;         
 int16_t motor2_speed;         
 int16_t motor3_speed;     
+
+int pwm_X = 0;
+int pwm_X_test = 0;

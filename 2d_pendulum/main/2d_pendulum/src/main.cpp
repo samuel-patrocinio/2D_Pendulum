@@ -145,18 +145,18 @@ void Motor3_control(int sp) {
   pwmSet(PWM3_CH, 255 - abs(sp));
 }
  
-void XYZ_to_threeWay(float pwm_X, float pwm_Y, float pwm_Z) {
-  int16_t m1 = round((0.5 * pwm_X - 0.866 * pwm_Y) / 1.37 + pwm_Z);  
-  int16_t m2 = round((0.5 * pwm_X + 0.866 * pwm_Y) / 1.37 + pwm_Z);
-  int16_t m3 = pwm_X + pwm_Z;  
+void XY_to_threeWay(float pwm_X, float pwm_Y) {
+  int16_t m1 = round((0.5 * pwm_X - 0.866 * pwm_Y) / 1.37);  
+  int16_t m2 = round((0.5 * pwm_X + 0.866 * pwm_Y) / 1.37);
+  int16_t m3 = pwm_X;  
   Motor1_control(0);
   Motor2_control(0);
   Motor3_control(m3);
 }
  
-void threeWay_to_XY(int in_speed1, int in_speed2, int in_speed3) {
-  speed_X = ((in_speed3 - (in_speed2 + in_speed1) * 0.5) * 0.5) * 1.81;
-  speed_Y = -(-0.866 * (in_speed2 - in_speed1)) / 1.1;
+void threeWay_to_XY(int m1_speed, int m2_speed, int m3_speed) {
+  speed_X = (m1_speed - m2_speed) * 0.866;
+  speed_Y = (m1_speed + m2_speed) * 0.5 - m3_speed;
 }
  
 void ENC1_READ() {
@@ -346,13 +346,9 @@ void setup() {
 void loop() {
   currentT = millis();
   if (currentT - previousT_1 >= loop_time) {
+
     Tuning();
     angle_calc();
-
-    //Serial.print("X: ");
-    //Serial.print(robot_angleX);
-    //Serial.print(" Y: ");
-    //Serial.println(robot_angleY);
  
     motor1_speed = enc_count1;
     enc_count1 = 0;
@@ -360,30 +356,27 @@ void loop() {
     enc_count2 = 0;
     motor3_speed = enc_count3;
     enc_count3 = 0;
+
     threeWay_to_XY(motor1_speed, motor2_speed, motor3_speed);
-    motors_speed_Z = motor1_speed + motor2_speed + motor3_speed;
     
     if (vertical_vertex && calibrated && !calibrating) {    
       applyBrakes();
       gyroX = GyX / 131.0;
       gyroY = GyY / 131.0;
-      gyroZ = GyZ / 131.0;
       gyroXfilt = alpha * gyroX + (1 - alpha) * gyroXfilt;
       gyroYfilt = alpha * gyroY + (1 - alpha) * gyroYfilt;
       
-      // int pwm_X = constrain(K1 * robot_angleX + K2 * gyroXfilt + K3 * speed_X + K4 * motors_speed_X, -255, 255);
-      // int pwm_Y = constrain(K1 * robot_angleY + K2 * gyroYfilt + K3 * speed_Y + K4 * motors_speed_Y, -255, 255);
-      // int pwm_Z = constrain(zK2 * gyroZ + zK3 * motors_speed_Z, -255, 255);
-      // pwm_Z = 0;
+      int pwm_X = constrain(K1 * robot_angleX + K2 * gyroXfilt + K3 * speed_Y + K4 * motors_speed_Y, -255, 255);
+      int pwm_Y = constrain(K1 * robot_angleY + K2 * gyroYfilt + K3 * speed_X + K4 * motors_speed_X, -255, 255);
  
-      // motors_speed_X += speed_X / 5;
-      // motors_speed_Y += speed_Y / 5;
-      // XYZ_to_threeWay(pwm_X, pwm_Y, pwm_Z);
+      motors_speed_X += speed_X / 5;
+      motors_speed_Y += speed_Y / 5;
+      XY_to_threeWay(pwm_X, pwm_Y);
 
-      int pwm_X = constrain(eK1 * robot_angleX + eK2 * gyroXfilt + eK3 * motor3_speed + eK4 * motors_speed_X, -255, 255);
+      // pwm_X = constrain(eK1 * robot_angleX + eK2 * gyroXfilt + eK3 * motor3_speed + eK4 * motors_speed_X, -255, 255);
       
-      motors_speed_X += motor3_speed / 5;
-      Motor3_control(pwm_X);
+      // motors_speed_X += motor3_speed / 5;
+      // Motor3_control(pwm_X);
  
  
     } else if (vertical_edge && calibrated && !calibrating) {
@@ -398,12 +391,20 @@ void loop() {
  
       
     } else {
-      XYZ_to_threeWay(0, 0, 0);
+      XY_to_threeWay(0, 0);
       releaseBrakes();
       motors_speed_X = 0;
       motors_speed_Y = 0;
     }
     previousT_1 = currentT;
+
+    // Serial.print("robot_angleX: "); Serial.print(robot_angleX);
+    // Serial.print(" gyroXfilt: "); Serial.print(gyroXfilt);
+    // Serial.print(" speed_Y: "); Serial.print(speed_Y);
+    // Serial.print(" motors_speed_Y: "); Serial.print(motors_speed_Y);
+    // Serial.print(" motor3_speed: "); Serial.print(motor3_speed);
+    // Serial.print(" pwm X: "); Serial.print(pwm_X);
+    // Serial.print(" pwm X test: "); Serial.println(pwm_X_test);
   }
   
   if (currentT - previousT_2 >= 2000) {    
