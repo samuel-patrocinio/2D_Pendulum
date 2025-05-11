@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #define BRAKE1      14
 #define DIR1        16
 #define ENC1_1      25
@@ -49,6 +51,7 @@ float K1 = 190;
 float K2 = 31.00;
 float K3 = 2.5;
 float K4 = 0.014;
+
 float zK2 = 8.00;
 float zK3 = 0.30;
  
