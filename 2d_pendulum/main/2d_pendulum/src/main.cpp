@@ -145,12 +145,12 @@ void Motor3_control(int sp) {
   pwmSet(PWM3_CH, 255 - abs(sp));
 }
  
-void XY_to_threeWay(float pwm_X, float pwm_Y) {
-  int16_t m1 = round((0.5 * pwm_X - 0.866 * pwm_Y) / 1.37);  
-  int16_t m2 = round((0.5 * pwm_X + 0.866 * pwm_Y) / 1.37);
+void XYZ_to_threeWay(float pwm_X, float pwm_Y, float pwm_Z) {
+  int16_t m1 = round((0.5 * pwm_X - 0.866 * pwm_Y) / 1.37 + pwm_Z);  
+  int16_t m2 = round((0.5 * pwm_X + 0.866 * pwm_Y) / 1.37 + pwm_Z);
   int16_t m3 = pwm_X;  
-  Motor1_control(0);
-  Motor2_control(0);
+  Motor1_control(m1);
+  Motor2_control(m2);
   Motor3_control(m3);
 }
  
@@ -190,28 +190,28 @@ void ENC3_READ() {
 }
  
 int Tuning() {
-  if (!Serial.available()) return 0;
+  if (!SerialBT.available()) return 0;
  
-  String input = Serial.readStringUntil('\n');
+  String input = SerialBT.readStringUntil('\n');
   input.trim();
  
   // Comando de calibração (mantido do código original)
   if (input == "c+") {
     if (!calibrating) {
       calibrating = true;
-      Serial.println("🔧 Calibração iniciada. Coloque o cubo no vértice...");
+      SerialBT.println("🔧 Calibração iniciada. Coloque o cubo no vértice...");
     }
     return 1;
   }
  
   if (input == "c-") {
-    Serial.print("X: "); Serial.print(AcX); Serial.print(" Y: "); Serial.print(AcY); Serial.print(" Z: "); Serial.println(AcZ + 16384);
+    SerialBT.print("X: "); SerialBT.print(AcX); SerialBT.print(" Y: "); SerialBT.print(AcY); SerialBT.print(" Z: "); SerialBT.println(AcZ + 16384);
     if (abs(AcX) < 2000 && abs(AcY) < 2000) {
       offsets.ID = 96;
       offsets.acXv = AcX;
       offsets.acYv = AcY;
       offsets.acZv = AcZ + 16384;
-      Serial.println("✅ Vértice calibrado. Agora coloque na aresta.");
+      SerialBT.println("✅ Vértice calibrado. Agora coloque na aresta.");
       save();
       vertex_calibrated = true;
  
@@ -219,65 +219,65 @@ int Tuning() {
       //offsets.acXe = AcX;
       //offsets.acYe = AcY;
       //offsets.acZe = AcZ + 16384;
-      //Serial.println("✅ Aresta calibrada.");
+      //SerialBT.println("✅ Aresta calibrada.");
       //save();
     //} 
     else {
-      Serial.println("⚠️ Ângulos inválidos para calibração.");
+      SerialBT.println("⚠️ Ângulos inválidos para calibração.");
     }
     return 1;
   }
  
   // Comando de exibição dos valores atuais
   if (input == "print") {
-    Serial.printf("K1=%.2f K2=%.2f K3=%.2f K4=%.3f\n", K1, K2, K3, K4);
-    Serial.printf("zK2=%.2f zK3=%.2f\n", zK2, zK3);
-    Serial.printf("eK1=%.2f eK2=%.2f eK3=%.2f eK4=%.3f\n", eK1, eK2, eK3, eK4);
+    SerialBT.printf("K1=%.2f K2=%.2f K3=%.2f K4=%.3f\n", K1, K2, K3, K4);
+    SerialBT.printf("zK2=%.2f zK3=%.2f\n", zK2, zK3);
+    SerialBT.printf("eK1=%.2f eK2=%.2f eK3=%.2f eK4=%.3f\n", eK1, eK2, eK3, eK4);
     return 1;
   }
  
 if (input.startsWith("K1=")) {
     K1 = input.substring(3).toFloat();
-    Serial.print("K1 atualizado para: "); Serial.println(K1);
+    SerialBT.print("K1 atualizado para: "); SerialBT.println(K1);
     return 1;
   } else if (input.startsWith("K2=")) {
     K2 = input.substring(3).toFloat();
-    Serial.print("K2 atualizado para: "); Serial.println(K2);
+    SerialBT.print("K2 atualizado para: "); SerialBT.println(K2);
     return 1;
   } else if (input.startsWith("K3=")) {
     K3 = input.substring(3).toFloat();
-    Serial.print("K3 atualizado para: "); Serial.println(K3);
+    SerialBT.print("K3 atualizado para: "); SerialBT.println(K3);
     return 1;
   } else if (input.startsWith("K4=")) {
     K4 = input.substring(3).toFloat();
-    Serial.print("K4 atualizado para: "); Serial.println(K4);
+    SerialBT.print("K4 atualizado para: "); SerialBT.println(K4);
     return 1;
   } else if (input.startsWith("zK2=")) {
     zK2 = input.substring(4).toFloat();
-    Serial.print("zK2 atualizado para: "); Serial.println(zK2);
+    SerialBT.print("zK2 atualizado para: "); SerialBT.println(zK2);
     return 1;
   } else if (input.startsWith("zK3=")) {
     zK3 = input.substring(4).toFloat();
-    Serial.print("zK3 atualizado para: "); Serial.println(zK3);
+    SerialBT.print("zK3 atualizado para: "); SerialBT.println(zK3);
     return 1;
   } else if (input.startsWith("eK1=")) {
     eK1 = input.substring(4).toFloat();
-    Serial.print("eK1 atualizado para: "); Serial.println(eK1);
+    SerialBT.print("eK1 atualizado para: "); SerialBT.println(eK1);
     return 1;
   } else if (input.startsWith("eK2=")) {
     eK2 = input.substring(4).toFloat();
-    Serial.print("eK2 atualizado para: "); Serial.println(eK2);
+    SerialBT.print("eK2 atualizado para: "); SerialBT.println(eK2);
     return 1;
   } else if (input.startsWith("eK3=")) {
     eK3 = input.substring(4).toFloat();
-    Serial.print("eK3 atualizado para: "); Serial.println(eK3);
+    SerialBT.print("eK3 atualizado para: "); SerialBT.println(eK3);
     return 1;
   } else if (input.startsWith("eK4=")) {
     eK4 = input.substring(4).toFloat();
-    Serial.print("eK4 atualizado para: "); Serial.println(eK4);
+    SerialBT.print("eK4 atualizado para: "); SerialBT.println(eK4);
     return 1;
   } else {
-    Serial.println("Comando invalido! Use formato GANHO=VALOR. Exemplo: K1=180");
+    SerialBT.println("Comando invalido! Use formato GANHO=VALOR. Exemplo: K1=180");
     return 1;
   }
 }
@@ -296,7 +296,7 @@ void applyBrakes() {
  
 void setup() {
   Serial.begin(115200);
-  SerialBT.begin("ESP32-Cube"); // Bluetooth device name
+  SerialBT.begin("2d-pendulum"); // Bluetooth device name
  
   EEPROM.begin(EEPROM_SIZE);
  
@@ -358,6 +358,7 @@ void loop() {
     enc_count3 = 0;
 
     threeWay_to_XY(motor1_speed, motor2_speed, motor3_speed);
+    motors_speed_Z = motor1_speed + motor2_speed + motor3_speed;
     
     if (vertical_vertex && calibrated && !calibrating) {    
       applyBrakes();
@@ -368,10 +369,11 @@ void loop() {
       
       int pwm_X = constrain(K1 * robot_angleX + K2 * gyroXfilt + K3 * speed_Y + K4 * motors_speed_Y, -255, 255);
       int pwm_Y = constrain(K1 * robot_angleY + K2 * gyroYfilt + K3 * speed_X + K4 * motors_speed_X, -255, 255);
+      int pwm_Z = constrain(zK2 * gyroZ + zK3 * motors_speed_Z, -255, 255);
  
       motors_speed_X += speed_X / 5;
       motors_speed_Y += speed_Y / 5;
-      XY_to_threeWay(pwm_X, pwm_Y);
+      XYZ_to_threeWay(pwm_X, pwm_Y, pwm_Z);
 
       // pwm_X = constrain(eK1 * robot_angleX + eK2 * gyroXfilt + eK3 * motor3_speed + eK4 * motors_speed_X, -255, 255);
       
@@ -391,7 +393,7 @@ void loop() {
  
       
     } else {
-      XY_to_threeWay(0, 0);
+      XYZ_to_threeWay(0, 0, 0);
       releaseBrakes();
       motors_speed_X = 0;
       motors_speed_Y = 0;
