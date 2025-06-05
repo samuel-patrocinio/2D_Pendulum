@@ -234,15 +234,6 @@ int calibrateGyroAxis(char axis) {
   return offset;
 }
 
-void blinkLED(int time, int count){
-  for (int i = 0; i < count; i++) {
-    digitalWrite(LED, HIGH);
-    delay(time);
-    digitalWrite(LED, LOW);
-    delay(time);
-  }
-}
-
 int Tuning() {
   if (is_running) return 0;
 
@@ -258,7 +249,6 @@ int Tuning() {
 
     enc_count1 = 0;
     is_running = true;
-    blinkLED(250, 4);
     return 1;
   }
 
@@ -266,7 +256,6 @@ int Tuning() {
     EEPROM.get(0, offsets);
     enc_count1 = 0;
     is_running = true;
-    blinkLED(250, 4);
     return 1;
   }
 

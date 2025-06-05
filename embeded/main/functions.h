@@ -100,7 +100,6 @@ void Motor1_control(int sp);
 void Motor2_control(int sp);
 void Motor3_control(int sp);
 void setupMotor(int encA, int encB, void (*isr)(), int brakePin, int dirPin, int pwmPin, int pwmChannel);
-void blinkLED(int time, int count);
 Matrix matmul(Matrix A, Matrix B);
 Matrix euler_to_rotation_matrix(float, float, float);
 void printMatrix(Matrix);
