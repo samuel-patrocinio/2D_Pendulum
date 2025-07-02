@@ -31,13 +31,13 @@ void loop(){
 
     elapsedTime += loop_time/1000.0;
     if(elapsedTime >= 0.0 && elapsedTime < 10.0){
-      v = 0;
-    }
-    else if(elapsedTime >= 10.0 && elapsedTime < 20.0){
       v = 2;
     }
+    else if(elapsedTime >= 10.0 && elapsedTime < 20.0){
+      v = 4;
+    }
     else{
-      v = 0;
+      v = 2;
     }
 
     Motor3_control(VOLTAGE_TO_PWM(v, max_voltage));
